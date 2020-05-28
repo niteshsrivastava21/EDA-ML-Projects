@@ -1,18 +1,12 @@
-# Download the helper library from https://www.twilio.com/docs/python/install
-from twilio.rest import Client
+import requests
 
+url = "https://covid19india.p.rapidapi.com/getStateData/TN"
 
-# Your Account Sid and Auth Token from twilio.com/console
-# DANGER! This is insecure. See http://twil.io/secure
-account_sid = 'ACd836e2ff2ce9242645209cc2fa589909'
-auth_token = 'e2e34c542a9c3c761f18563c597e8d67'
-client = Client(account_sid, auth_token)
+headers = {
+    'x-rapidapi-host': "covid19india.p.rapidapi.com",
+    'x-rapidapi-key': "6209f104damsh4bc552882960a5ap1e0542jsnecb749b0e397"
+    }
 
-message = client.messages \
-                .create(
-                     body="Join Earth's mightiest heroes. Like Kevin Bacon.",
-                     from_='+19569487628',
-                     to='+919980708840'
-                 )
+response = requests.request("GET", url, headers=headers)
 
-print(message.sid)
+print(response.text)

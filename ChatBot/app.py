@@ -1,5 +1,7 @@
-from flask import Flask, request, make_response, jsonify,Response
+import asyncio
 
+from flask import Flask, request, make_response, jsonify,Response
+from lex_model import lex_model
 
 from model import Model
 from MakeRichResponse import MakeRichResponse
@@ -7,7 +9,7 @@ from datetime import date
 from RapidAPI import *
 from Parse_Intent_Request import Parse_Intent_Request
 import json
-from lex_model import lex_model
+
 
 app = Flask(__name__)
 
@@ -21,15 +23,52 @@ def webhook1():
 @app.route('/webhook_lex', methods=['GET', 'POST'])
 def webhook_lex_fn():
     print("hello")
-
-
     if request.json["action_name"] is not None:
         action_name = request.json["action_name"]
         data_to_Store={}
         if action_name == "check_phone_format":
             phone_number=request.json["phone-number"]
             phone_check_response=lex_model.parse_phone_format(phone_number= phone_number,data_to_store= data_to_Store)
-    return Response(phone_check_response)
+            return Response(phone_check_response)
+        elif action_name == "get_covid_data":
+            state_name="india"
+            case_type_activity="all"
+            if request.json["state_name"] is not None:
+                state_name = request.json["state_name"]
+            if request.json["case_type"] is not None:
+                case_type_activity = request.json["case_type"]
+
+            if state_name.lower() == "world":
+                response_message=lex_model.getWorldCovidData(data_to_store=data_to_Store)
+            elif state_name.lower()=="india":
+                response_message = lex_model.getIndiaCovidData(data_to_store=data_to_Store)
+            else:
+                response_message= lex_model.getStateBasedData(state_name,case_type_activity,data_to_store=data_to_Store)
+            return Response(response_message)
+        elif "showDemographicDistribution" in action_name:
+            response_message=lex_model.getDemographicDistribution(data_to_Store)
+            return response_message
+        elif "getDosDonts" in action_name:
+            email_add = "nitesh@ahs.com"
+            final_response=lex_model.getDosAndDonts(data_to_Store,email_add)
+            return final_response
+        if "sendEmailInfo" in action_name:
+            model=Model()
+            email_add="niteshsrivastava21@gmail.com"
+            person_name="Nitesh"
+            loop_event=asyncio.new_event_loop()
+            loop_event.set_debug(True)
+            asyncio.set_event_loop(loop_event)
+            loop_event.create_task(lex_model.send_email_process(email_addr=email_add, person_name=person_name,data_to_store=data_to_Store))
+            email_msg="Dear {0}, An Email is sent to {1}. In case if you dont receive, please refer https://www.mohfw.gov.in/pdf/FAQ.pdf.".format(person_name, email_add)
+            next_state_list = model.get_n_states_from_list(2)
+            list_to_show = ["Cases in {}".format(i) for i in next_state_list]
+            list_to_show.append("India Cases")
+            final_response = "{'button1':'" + list_to_show[0] + "','button2':'" + list_to_show[1] + \
+                             "','button3':'" + list_to_show[2] + "'," \
+                                                                 "'message':'"+email_msg+"'}"
+            return final_response
+
 
 
 
