@@ -53,7 +53,7 @@ conda-verify==3.4.2
 confuse==1.0.0
 contextlib2==0.5.5
 covid==2.2.0
-cryptography==2.7
+cryptography==3.2
 cssselect2==0.3.0
 cycler==0.10.0
 Cython==0.29.12
